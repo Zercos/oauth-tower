@@ -1,6 +1,6 @@
-package server
+package api
 
-// Response Type strings.
+// Response Types
 const (
 	ResponseTypeAuthorizationCodeFlow = "code"
 	ResponseTypeImplicitFlowIDToken   = "id_token"
@@ -11,4 +11,10 @@ const (
 // Subject Types
 const (
 	SubjectTypePublic = "public"
+)
+
+// Endpoints
+const (
+	EndpointWellKnown     = ".well-known/oauth-authorization-server"
+	EndpointAuthorization = "authorization"
 )

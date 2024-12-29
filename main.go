@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/zercos/oauth-tower/internal/server"
+	"github.com/zercos/oauth-tower/internal/api"
 )
 
 func main() {
-	serv := server.CreateServer()
-	server.Run(serv)
+	serv := api.CreateServer()
+	api.Run(serv)
 }
