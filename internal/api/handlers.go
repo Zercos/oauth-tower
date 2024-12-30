@@ -6,6 +6,23 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type WellKnownConfiguration struct {
+	Issuer                                     string   `json:"issuer"`
+	JWKSURI                                    string   `json:"jwks_uri,omitempty"`
+	AuthorizationEndpoint                      string   `json:"authorization_endpoint"`
+	TokenEndpoint                              string   `json:"token_endpoint,omitempty"`
+	SubjectTypesSupported                      []string `json:"subject_types_supported"`
+	ResponseTypesSupported                     []string `json:"response_types_supported"`
+	GrantTypesSupported                        []string `json:"grant_types_supported,omitempty"`
+	ScopesSupported                            []string `json:"scopes_supported,omitempty"`
+	ClaimsSupported                            []string `json:"claims_supported,omitempty"`
+	TokenEndpointAuthMethodsSupported          []string `json:"token_endpoint_auth_methods_supported,omitempty"`
+	TokenEndpointAuthSigningAlgValuesSupported []string `json:"token_endpoint_auth_signing_alg_values_supported,omitempty"`
+	IntrospectionEndpoint                      string   `json:"introspection_endpoint,omitempty"`
+	RevocationEndpoint                         string   `json:"revocation_endpoint,omitempty"`
+	RegistrationEndpoint                       string   `json:"registration_endpoint,omitempty"`
+}
+
 func indexHandler(c echo.Context) error {
 	cc := c.(RequestContext)
 	response := map[string]string{
@@ -29,23 +46,9 @@ func authorizationServerWellKnownHandler(c echo.Context) error {
 			ResponseTypeImplicitFlowIDToken,
 			ResponseTypeImplicitFlowToken,
 		},
+		TokenEndpoint:         issuer + "/" + EndpointToken,
+		IntrospectionEndpoint: issuer + "/" + EndpointIntrospection,
+		RevocationEndpoint:    issuer + "/" + EndpointRevocation,
 	}
 	return c.JSON(http.StatusOK, data)
-}
-
-type WellKnownConfiguration struct {
-	Issuer                                     string   `json:"issuer"`
-	JWKSURI                                    string   `json:"jwks_uri,omitempty"`
-	AuthorizationEndpoint                      string   `json:"authorization_endpoint"`
-	TokenEndpoint                              string   `json:"token_endpoint,omitempty"`
-	SubjectTypesSupported                      []string `json:"subject_types_supported"`
-	ResponseTypesSupported                     []string `json:"response_types_supported"`
-	GrantTypesSupported                        []string `json:"grant_types_supported,omitempty"`
-	ScopesSupported                            []string `json:"scopes_supported,omitempty"`
-	ClaimsSupported                            []string `json:"claims_supported,omitempty"`
-	TokenEndpointAuthMethodsSupported          []string `json:"token_endpoint_auth_methods_supported,omitempty"`
-	TokenEndpointAuthSigningAlgValuesSupported []string `json:"token_endpoint_auth_signing_alg_values_supported,omitempty"`
-	IntrospectionEndpoint                      string   `json:"introspection_endpoint,omitempty"`
-	RevocationEndpoint                         string   `json:"revocation_endpoint,omitempty"`
-	RegistrationEndpoint                       string   `json:"registration_endpoint,omitempty"`
 }

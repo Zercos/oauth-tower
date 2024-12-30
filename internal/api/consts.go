@@ -17,4 +17,7 @@ const (
 const (
 	EndpointWellKnown     = ".well-known/oauth-authorization-server"
 	EndpointAuthorization = "authorization"
+	EndpointToken         = "token"
+	EndpointIntrospection = "introspection"
+	EndpointRevocation    = "revocation"
 )
