@@ -20,4 +20,5 @@ const (
 	EndpointToken         = "token"
 	EndpointIntrospection = "introspection"
 	EndpointRevocation    = "revocation"
+	EndpointJWK           = "jwks.json"
 )

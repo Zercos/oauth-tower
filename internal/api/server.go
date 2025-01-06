@@ -29,6 +29,7 @@ func CreateServer() *echo.Echo {
 	// Routes
 	e.GET("/", indexHandler)
 	e.GET("/"+EndpointWellKnown, authorizationServerWellKnownHandler)
+	e.GET("/"+EndpointJWK, JWKHandler)
 	return e
 }
 
