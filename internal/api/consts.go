@@ -15,10 +15,10 @@ const (
 
 // Endpoints
 const (
-	EndpointWellKnown     = ".well-known/oauth-authorization-server"
-	EndpointAuthorization = "authorization"
-	EndpointToken         = "token"
-	EndpointIntrospection = "introspection"
-	EndpointRevocation    = "revocation"
-	EndpointJWK           = "jwks.json"
+	EndpointWellKnown     = "/.well-known/oauth-authorization-server"
+	EndpointAuthorization = "/oauth/authorization"
+	EndpointToken         = "/oauth/token"
+	EndpointIntrospection = "/oauth/introspection"
+	EndpointRevocation    = "/oauth/revocation"
+	EndpointJWK           = "/oauth/jwks.json"
 )

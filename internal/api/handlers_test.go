@@ -11,11 +11,12 @@ import (
 
 func TestIndexHandler(t *testing.T) {
 	// given
-	e := newServer()
+	appCtx := NewAppContext()
+	e := newServer(appCtx)
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
-	c := RequestContext{e.NewContext(req, rec)}
-	expectedConfigUrl := c.getIssuerUrl().String() + "/" + EndpointWellKnown
+	c := newRequestContext(e.NewContext(req, rec), appCtx)
+	expectedConfigUrl := c.getIssuerUrl().String() + EndpointWellKnown
 
 	// when
 	err := indexHandler(c)
@@ -33,10 +34,11 @@ func TestIndexHandler(t *testing.T) {
 
 func TestAuthorizationServerWellKnownHandler(t *testing.T) {
 	// given
-	e := newServer()
-	req := httptest.NewRequest(http.MethodGet, "/"+EndpointWellKnown, nil)
+	appCtx := NewAppContext()
+	e := newServer(appCtx)
+	req := httptest.NewRequest(http.MethodGet, EndpointWellKnown, nil)
 	rec := httptest.NewRecorder()
-	c := RequestContext{e.NewContext(req, rec)}
+	c := newRequestContext(e.NewContext(req, rec), appCtx)
 
 	// when
 	err := authorizationServerWellKnownHandler(c)
@@ -49,5 +51,25 @@ func TestAuthorizationServerWellKnownHandler(t *testing.T) {
 	err = json.Unmarshal(rec.Body.Bytes(), &res)
 	assert.NoError(t, err)
 	assert.Equal(t, c.getIssuerUrl().String(), res.Issuer)
-	assert.Equal(t, c.getIssuerUrl().String()+"/"+EndpointAuthorization, res.AuthorizationEndpoint)
+	assert.Equal(t, c.getIssuerUrl().String()+EndpointAuthorization, res.AuthorizationEndpoint)
+}
+
+func TestJWKHandler(t *testing.T) {
+	// given
+	appCtx := NewAppContext()
+	e := newServer(appCtx)
+	req := httptest.NewRequest(http.MethodGet, EndpointJWK, nil)
+	rec := httptest.NewRecorder()
+	c := newRequestContext(e.NewContext(req, rec), appCtx)
+
+	// when
+	err := JWKHandler(c)
+
+	// then
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var res map[string][]map[string]string
+	err = json.Unmarshal(rec.Body.Bytes(), &res)
+	assert.NoError(t, err)
 }

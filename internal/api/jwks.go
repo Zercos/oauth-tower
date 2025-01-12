@@ -1,8 +1,8 @@
 package api
 
 import (
-	"crypto/md5"
-	"encoding/hex"
+	"crypto"
+	"encoding/base64"
 	"os"
 
 	"github.com/go-jose/go-jose/v4"
@@ -13,7 +13,7 @@ type JWKManager struct {
 	keyByKid map[string]jose.JSONWebKey
 }
 
-func (m *JWKManager) ImportKeys() error {
+func (m *JWKManager) LoadKeys() error {
 	dirPath := "./keys"
 	files, err := os.ReadDir(dirPath)
 	if err != nil {
@@ -24,16 +24,33 @@ func (m *JWKManager) ImportKeys() error {
 		if !file.IsDir() && len(name) >= 10 && name[len(name)-10:] == "public.pem" {
 			pemData, err := os.ReadFile(dirPath + "/" + name)
 			if err != nil {
-				return err
+				continue
 			}
 			pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pemData)
 			if err != nil {
-				return err
+				continue
 			}
-			keyIdHash := md5.Sum(pemData)
-			keyId := hex.EncodeToString(keyIdHash[:])
-			m.keyByKid[keyId] = jose.JSONWebKey{Key: pubKey, KeyID: keyId, Algorithm: "RS256"}
+			key := jose.JSONWebKey{Key: pubKey, Algorithm: "RS256"}
+			thumbprint, err := key.Thumbprint(crypto.SHA256)
+			if err != nil {
+				continue
+			}
+			kid := base64.RawURLEncoding.EncodeToString(thumbprint[:])
+			key.KeyID = kid
+			m.keyByKid[kid] = key
 		}
 	}
 	return nil
+}
+
+func (m *JWKManager) GetSet() jose.JSONWebKeySet {
+	keys := []jose.JSONWebKey{}
+	for _, key := range m.keyByKid {
+		keys = append(keys, key)
+	}
+	return jose.JSONWebKeySet{Keys: keys}
+}
+
+func NewJWKManager() *JWKManager {
+	return &JWKManager{keyByKid: make(map[string]jose.JSONWebKey)}
 }

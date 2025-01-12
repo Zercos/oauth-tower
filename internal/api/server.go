@@ -6,11 +6,11 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
-func newServer() *echo.Echo {
+func newServer(ctx *AppContext) *echo.Echo {
 	e := echo.New()
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			cc := RequestContext{c}
+			cc := newRequestContext(c, ctx)
 			return next(cc)
 		}
 	})
@@ -24,15 +24,24 @@ func newServer() *echo.Echo {
 }
 
 func CreateServer() *echo.Echo {
-	e := newServer()
+	ctx := NewAppContext()
+	err := ctx.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+	e := newServer(ctx)
 
 	// Routes
 	e.GET("/", indexHandler)
-	e.GET("/"+EndpointWellKnown, authorizationServerWellKnownHandler)
-	e.GET("/"+EndpointJWK, JWKHandler)
+	e.GET(EndpointWellKnown, authorizationServerWellKnownHandler)
+	e.GET(EndpointJWK, JWKHandler)
 	return e
 }
 
 func Run(e *echo.Echo) {
 	e.Logger.Fatal(e.Start(":8000"))
+}
+
+func newRequestContext(c echo.Context, ctx *AppContext) RequestContext {
+	return RequestContext{c, ctx.JWKManager}
 }

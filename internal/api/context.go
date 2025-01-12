@@ -8,6 +8,7 @@ import (
 
 type RequestContext struct {
 	echo.Context
+	JWKManager *JWKManager
 }
 
 func (c *RequestContext) getIssuerUrl() *url.URL {
@@ -21,4 +22,18 @@ func (c *RequestContext) getIssuerUrl() *url.URL {
 		Host:   host,
 		Path:   "",
 	}
+}
+
+type AppContext struct {
+	initiated  bool
+	JWKManager *JWKManager
+}
+
+func (ctx *AppContext) Init() error {
+	ctx.initiated = true
+	return ctx.JWKManager.LoadKeys()
+}
+
+func NewAppContext() *AppContext {
+	return &AppContext{JWKManager: NewJWKManager()}
 }
