@@ -41,3 +41,16 @@ func JWKHandler(c echo.Context) error {
 	ctx := c.(RequestContext)
 	return c.JSON(http.StatusOK, ctx.JWKManager.GetSet())
 }
+
+func NewTokenHandler(c echo.Context) error {
+	type NewTokenData struct {
+		ClientId     string `json:"client_id"`
+		ClientSecret string `json:"client_secret"`
+		GrantType    string `json:"grant_type"`
+	}
+	var tokenData NewTokenData
+	if err := c.Bind(&tokenData); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+	return c.JSON(http.StatusOK, struct{}{})
+}

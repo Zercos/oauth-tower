@@ -35,6 +35,7 @@ func CreateServer() *echo.Echo {
 	e.GET("/", indexHandler)
 	e.GET(EndpointWellKnown, authorizationServerWellKnownHandler)
 	e.GET(EndpointJWK, JWKHandler)
+	e.POST(EndpointToken, NewTokenHandler)
 	return e
 }
 

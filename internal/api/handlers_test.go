@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -70,6 +72,28 @@ func TestJWKHandler(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var res map[string][]map[string]string
+	err = json.Unmarshal(rec.Body.Bytes(), &res)
+	assert.NoError(t, err)
+}
+
+func TestClientCredentialsNewTokenHandler(t *testing.T) {
+	// given
+	appCtx := NewAppContext()
+	e := newServer(appCtx)
+	newTokenReqJson := `{"client_id":"client1","client_secret":"secret","grant_type":"client_credentials"}`
+	req := httptest.NewRequest(http.MethodPost, EndpointToken, strings.NewReader(newTokenReqJson))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := newRequestContext(e.NewContext(req, rec), appCtx)
+
+	// when
+	err := NewTokenHandler(c)
+
+	// then
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var res map[string]string
 	err = json.Unmarshal(rec.Body.Bytes(), &res)
 	assert.NoError(t, err)
 }
