@@ -85,6 +85,7 @@ func TestClientCredentialsNewTokenHandler(t *testing.T) {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := newRequestContext(e.NewContext(req, rec), appCtx)
+	c.ClientRepo.AddClient(OAuthClient{"client1", "secret"})
 
 	// when
 	err := NewTokenHandler(c)

@@ -22,3 +22,9 @@ const (
 	EndpointRevocation    = "/oauth/revocation"
 	EndpointJWK           = "/oauth/jwks.json"
 )
+
+// Grant Types
+const (
+	GrantTypeAuthorizationCode = "authorization_code"
+	GrantTypeClientCredentials = "client_credentials"
+)

@@ -9,6 +9,7 @@ import (
 type RequestContext struct {
 	echo.Context
 	JWKManager *JWKManager
+	ClientRepo *ClientRepository
 }
 
 func (c *RequestContext) getIssuerUrl() *url.URL {
@@ -27,6 +28,7 @@ func (c *RequestContext) getIssuerUrl() *url.URL {
 type AppContext struct {
 	initiated  bool
 	JWKManager *JWKManager
+	ClientRepo *ClientRepository
 }
 
 func (ctx *AppContext) Init() error {
@@ -35,5 +37,5 @@ func (ctx *AppContext) Init() error {
 }
 
 func NewAppContext() *AppContext {
-	return &AppContext{JWKManager: NewJWKManager()}
+	return &AppContext{JWKManager: NewJWKManager(), ClientRepo: NewClientRepository()}
 }

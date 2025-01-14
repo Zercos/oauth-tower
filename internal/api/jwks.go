@@ -51,6 +51,14 @@ func (m *JWKManager) GetSet() jose.JSONWebKeySet {
 	return jose.JSONWebKeySet{Keys: keys}
 }
 
+func (m *JWKManager) GetSignKey() jose.JSONWebKey {
+	var key jose.JSONWebKey
+	for _, key := range m.keyByKid {
+		return key
+	}
+	return key
+}
+
 func NewJWKManager() *JWKManager {
 	return &JWKManager{keyByKid: make(map[string]jose.JSONWebKey)}
 }

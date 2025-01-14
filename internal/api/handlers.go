@@ -48,9 +48,17 @@ func NewTokenHandler(c echo.Context) error {
 		ClientSecret string `json:"client_secret"`
 		GrantType    string `json:"grant_type"`
 	}
+	ctx := c.(RequestContext)
 	var tokenData NewTokenData
 	if err := c.Bind(&tokenData); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-	return c.JSON(http.StatusOK, struct{}{})
+	if tokenData.GrantType == GrantTypeClientCredentials {
+		if err := ctx.ClientRepo.AuthenticateClient(tokenData.ClientId, tokenData.ClientSecret); err != nil {
+			ctx.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusUnauthorized)
+		}
+		return c.JSON(http.StatusOK, struct{}{})
+	}
+	return echo.NewHTTPError(http.StatusUnauthorized)
 }

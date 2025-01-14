@@ -44,5 +44,5 @@ func Run(e *echo.Echo) {
 }
 
 func newRequestContext(c echo.Context, ctx *AppContext) RequestContext {
-	return RequestContext{c, ctx.JWKManager}
+	return RequestContext{c, ctx.JWKManager, ctx.ClientRepo}
 }
