@@ -7,9 +7,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
+
+func init() {
+	godotenv.Load("../../.env")
+}
 
 func TestIndexHandler(t *testing.T) {
 	// given
@@ -79,6 +84,8 @@ func TestJWKHandler(t *testing.T) {
 func TestClientCredentialsNewTokenHandler(t *testing.T) {
 	// given
 	appCtx := NewAppContext()
+	err := appCtx.Init()
+	assert.NoError(t, err)
 	e := newServer(appCtx)
 	newTokenReqJson := `{"client_id":"client1","client_secret":"secret","grant_type":"client_credentials"}`
 	req := httptest.NewRequest(http.MethodPost, EndpointToken, strings.NewReader(newTokenReqJson))
@@ -88,13 +95,14 @@ func TestClientCredentialsNewTokenHandler(t *testing.T) {
 	c.ClientRepo.AddClient(OAuthClient{"client1", "secret"})
 
 	// when
-	err := NewTokenHandler(c)
+	err = NewTokenHandler(c)
 
 	// then
 	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
 
-	var res map[string]string
+	var res map[string]interface{}
 	err = json.Unmarshal(rec.Body.Bytes(), &res)
 	assert.NoError(t, err)
+	_, ok := res["access_token"]
+	assert.True(t, ok)
 }

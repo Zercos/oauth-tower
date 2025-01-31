@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 )
 
@@ -48,6 +49,11 @@ func NewTokenHandler(c echo.Context) error {
 		ClientSecret string `json:"client_secret"`
 		GrantType    string `json:"grant_type"`
 	}
+	type NewTokenResponse struct {
+		AccessToken string `json:"access_token"`
+		TokenType   string `json:"token_type"`
+		ExpiresIn   int    `json:"expires_in"`
+	}
 	ctx := c.(RequestContext)
 	var tokenData NewTokenData
 	if err := c.Bind(&tokenData); err != nil {
@@ -58,7 +64,28 @@ func NewTokenHandler(c echo.Context) error {
 			ctx.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusUnauthorized)
 		}
-		return c.JSON(http.StatusOK, struct{}{})
+		token := jwt.NewWithClaims(
+			jwt.SigningMethodRS256,
+			jwt.MapClaims{
+				"iss": ctx.getIssuerUrl(),
+			},
+		)
+		jwk := ctx.JWKManager.GetSignKey()
+		if jwk == nil {
+			ctx.Logger().Info("Missing signing key")
+			return echo.NewHTTPError(http.StatusUnauthorized)
+		}
+		signedToken, err := token.SignedString(jwk.Key)
+		if err != nil {
+			ctx.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusUnauthorized)
+		}
+		resp := NewTokenResponse{
+			AccessToken: signedToken,
+			TokenType:   "bearer",
+			ExpiresIn:   120,
+		}
+		return c.JSON(http.StatusOK, resp)
 	}
 	return echo.NewHTTPError(http.StatusUnauthorized)
 }
