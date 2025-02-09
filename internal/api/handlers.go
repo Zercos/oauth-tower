@@ -3,7 +3,6 @@ package api
 import (
 	"net/http"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 )
 
@@ -44,18 +43,8 @@ func JWKHandler(c echo.Context) error {
 }
 
 func NewTokenHandler(c echo.Context) error {
-	type NewTokenData struct {
-		ClientId     string `json:"client_id"`
-		ClientSecret string `json:"client_secret"`
-		GrantType    string `json:"grant_type"`
-	}
-	type NewTokenResponse struct {
-		AccessToken string `json:"access_token"`
-		TokenType   string `json:"token_type"`
-		ExpiresIn   int    `json:"expires_in"`
-	}
 	ctx := c.(RequestContext)
-	var tokenData NewTokenData
+	var tokenData RequestDataNewToken
 	if err := c.Bind(&tokenData); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
@@ -64,28 +53,15 @@ func NewTokenHandler(c echo.Context) error {
 			ctx.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusUnauthorized)
 		}
-		token := jwt.NewWithClaims(
-			jwt.SigningMethodRS256,
-			jwt.MapClaims{
-				"iss": ctx.getIssuerUrl(),
-			},
-		)
 		jwk := ctx.JWKManager.GetSignKey()
-		if jwk == nil {
-			ctx.Logger().Info("Missing signing key")
-			return echo.NewHTTPError(http.StatusUnauthorized)
-		}
-		signedToken, err := token.SignedString(jwk.Key)
+		issuer := ctx.getIssuerUrl().String()
+		newToken, err := GenerateJWT(issuer, jwk)
 		if err != nil {
 			ctx.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusUnauthorized)
 		}
-		resp := NewTokenResponse{
-			AccessToken: signedToken,
-			TokenType:   "bearer",
-			ExpiresIn:   120,
-		}
-		return c.JSON(http.StatusOK, resp)
+
+		return c.JSON(http.StatusOK, newToken)
 	}
 	return echo.NewHTTPError(http.StatusUnauthorized)
 }

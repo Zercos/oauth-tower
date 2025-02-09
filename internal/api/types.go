@@ -16,3 +16,15 @@ type WellKnownConfiguration struct {
 	RevocationEndpoint                         string   `json:"revocation_endpoint,omitempty"`
 	RegistrationEndpoint                       string   `json:"registration_endpoint,omitempty"`
 }
+
+type RequestDataNewToken struct {
+	ClientId     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	GrantType    string `json:"grant_type"`
+}
+
+type ResponseNewToken struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   int    `json:"expires_in"`
+}
