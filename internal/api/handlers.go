@@ -48,20 +48,14 @@ func NewTokenHandler(c echo.Context) error {
 	if err := c.Bind(&tokenData); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-	if tokenData.GrantType == GrantTypeClientCredentials {
-		if err := ctx.ClientRepo.AuthenticateClient(tokenData.ClientId, tokenData.ClientSecret); err != nil {
-			ctx.Logger().Info(err)
-			return echo.NewHTTPError(http.StatusUnauthorized)
-		}
-		jwk := ctx.JWKManager.GetSignKey()
-		issuer := ctx.getIssuerUrl().String()
-		newToken, err := GenerateJWT(issuer, jwk)
-		if err != nil {
-			ctx.Logger().Info(err)
-			return echo.NewHTTPError(http.StatusUnauthorized)
-		}
-
-		return c.JSON(http.StatusOK, newToken)
+	authorizer := authorizerByGrantType(tokenData.GrantType, ctx)
+	if authorizer == nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-	return echo.NewHTTPError(http.StatusUnauthorized)
+	newToken, err := authorizer.GenerateJWT(tokenData)
+	if err != nil {
+		ctx.Logger().Info(err)
+		return echo.NewHTTPError(http.StatusUnauthorized)
+	}
+	return c.JSON(http.StatusOK, newToken)
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func GenerateJWT(issuer string, jwk *jose.JSONWebKey) (ResponseNewToken, error) {
+func generateNewJWT(issuer string, jwk *jose.JSONWebKey) (ResponseNewToken, error) {
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodRS256,
 		jwt.MapClaims{

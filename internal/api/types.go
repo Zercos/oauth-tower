@@ -28,3 +28,7 @@ type ResponseNewToken struct {
 	TokenType   string `json:"token_type"`
 	ExpiresIn   int    `json:"expires_in"`
 }
+
+type GrantTypeAuthorizer interface {
+	GenerateJWT(tokenData RequestDataNewToken) (ResponseNewToken, error)
+}
