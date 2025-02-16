@@ -32,3 +32,9 @@ type ResponseNewToken struct {
 type GrantTypeAuthorizer interface {
 	GenerateJWT(tokenData RequestDataNewToken) (ResponseNewToken, error)
 }
+
+type IClientRepo interface {
+	GetClient(clientId string) (OAuthClient, error)
+	AddClient(client OAuthClient) error
+	AuthenticateClient(clientId string, clientSecret string) error
+}

@@ -14,6 +14,9 @@ import (
 
 func init() {
 	godotenv.Load("../../.env")
+	db := initDB()
+	defer db.Close()
+	db.ClearWholeDB()
 }
 
 func TestIndexHandler(t *testing.T) {
@@ -92,7 +95,8 @@ func TestClientCredentialsNewTokenHandler(t *testing.T) {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := newRequestContext(e.NewContext(req, rec), appCtx)
-	c.ClientRepo.AddClient(OAuthClient{"client1", "secret"})
+	err = c.ClientRepo.AddClient(OAuthClient{"client1", "secret"})
+	assert.NoError(t, err)
 
 	// when
 	err = NewTokenHandler(c)

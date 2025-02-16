@@ -1,0 +1,20 @@
+package api
+
+import "os"
+
+var config Config
+
+func init() {
+	config = Config{}
+}
+
+type Config struct {
+}
+
+func (c *Config) getJwkPath() string {
+	return os.Getenv("JWK_PATH")
+}
+
+func (c *Config) getDbPath() string {
+	return os.Getenv("DB_PATH")
+}

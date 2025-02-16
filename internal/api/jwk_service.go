@@ -20,7 +20,7 @@ type JWKManager struct {
 }
 
 func (m *JWKManager) LoadKeys() error {
-	dirPath := os.Getenv("JWK_PATH")
+	dirPath := config.getJwkPath()
 	files, err := os.ReadDir(dirPath)
 	if err != nil {
 		return err

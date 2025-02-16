@@ -1,6 +1,8 @@
 package api
 
-import "errors"
+import (
+	"errors"
+)
 
 type OAuthClient struct {
 	ClientId     string
@@ -8,21 +10,35 @@ type OAuthClient struct {
 }
 
 type ClientRepository struct {
-	db map[string]OAuthClient
+	db *DB
 }
 
-func (c *ClientRepository) GetClient(clientId string) OAuthClient {
-	return c.db[clientId]
+func (c *ClientRepository) GetClient(clientId string) (OAuthClient, error) {
+	var client OAuthClient
+	stmt, err := c.db.Prepare("select client_id, client_secret from clients where client_id = ?")
+	if err != nil {
+		return client, err
+	}
+	defer stmt.Close()
+	err = stmt.QueryRow(clientId).Scan(&client.ClientId, &client.ClientSecret)
+	if err != nil {
+		return client, err
+	}
+	return client, nil
 }
 
-func (c *ClientRepository) AddClient(client OAuthClient) {
-	c.db[client.ClientId] = client
+func (c *ClientRepository) AddClient(client OAuthClient) error {
+	_, err := c.db.Exec("INSERT INTO clients (client_id, client_secret) VALUES (?, ?)", client.ClientId, client.ClientSecret)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *ClientRepository) AuthenticateClient(clientId string, clientSecret string) error {
-	client, ok := c.db[clientId]
-	if !ok {
-		return errors.New("client not exists")
+	client, err := c.GetClient(clientId)
+	if err != nil {
+		return err
 	}
 	if client.ClientSecret != clientSecret {
 		return errors.New("client secret is invalid")
@@ -30,6 +46,6 @@ func (c *ClientRepository) AuthenticateClient(clientId string, clientSecret stri
 	return nil
 }
 
-func NewClientRepository() *ClientRepository {
-	return &ClientRepository{db: make(map[string]OAuthClient)}
+func NewClientRepository(db *DB) *ClientRepository {
+	return &ClientRepository{db: db}
 }
