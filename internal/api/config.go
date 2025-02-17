@@ -18,3 +18,7 @@ func (c *Config) getJwkPath() string {
 func (c *Config) getDbPath() string {
 	return os.Getenv("DB_PATH")
 }
+
+func (c *Config) getExpireTokenSec() uint16 {
+	return 1200
+}

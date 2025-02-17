@@ -26,3 +26,6 @@ keys/
 
 # Env
 .env
+
+# Test DB
+test.db

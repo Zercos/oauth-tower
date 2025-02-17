@@ -1,5 +1,11 @@
 package api
 
+import (
+	"time"
+
+	"github.com/golang-jwt/jwt"
+)
+
 func authorizerByGrantType(grantType string, ctx RequestContext) GrantTypeAuthorizer {
 	if grantType == GrantTypeClientCredentials {
 		return &ClientCredentialsAuthorizer{ctx}
@@ -16,7 +22,28 @@ func (a *ClientCredentialsAuthorizer) GenerateJWT(tokenData RequestDataNewToken)
 	if err := a.ctx.ClientRepo.AuthenticateClient(tokenData.ClientId, tokenData.ClientSecret); err != nil {
 		return ResponseNewToken{}, err
 	}
-	jwk := a.ctx.JWKManager.GetSignKey()
-	issuer := a.ctx.getIssuerUrl().String()
-	return generateNewJWT(issuer, jwk)
+	token := a.makeJWT(tokenData.ClientId)
+	signedToken, err := a.ctx.JWKManager.SignToken(token)
+	if err != nil {
+		return ResponseNewToken{}, err
+	}
+	newToken := ResponseNewToken{
+		AccessToken: signedToken,
+		TokenType:   "bearer",
+		ExpiresIn:   config.getExpireTokenSec(),
+	}
+	return newToken, nil
+}
+
+func (a *ClientCredentialsAuthorizer) makeJWT(clientId string) *jwt.Token {
+	token := jwt.NewWithClaims(
+		jwt.SigningMethodRS256,
+		jwt.MapClaims{
+			"iss": a.ctx.getIssuerUrl().String(),
+			"sub": clientId,
+			"exp": time.Now().Add(time.Second * time.Duration(config.getExpireTokenSec())).Unix(),
+			"iat": time.Now().Unix(),
+		},
+	)
+	return token
 }

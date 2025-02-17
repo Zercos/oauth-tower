@@ -33,6 +33,9 @@ func authorizationServerWellKnownHandler(c echo.Context) error {
 			ResponseTypeImplicitFlowIDToken,
 			ResponseTypeImplicitFlowToken,
 		},
+		ClaimsSupported: []string{
+			"iss", "sub", "aud", "exp", "iat", "nbf",
+		},
 	}
 	return c.JSON(http.StatusOK, data)
 }

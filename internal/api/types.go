@@ -26,7 +26,7 @@ type RequestDataNewToken struct {
 type ResponseNewToken struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
-	ExpiresIn   int    `json:"expires_in"`
+	ExpiresIn   uint16 `json:"expires_in"`
 }
 
 type GrantTypeAuthorizer interface {

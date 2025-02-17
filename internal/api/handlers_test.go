@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -107,6 +108,15 @@ func TestClientCredentialsNewTokenHandler(t *testing.T) {
 	var res map[string]interface{}
 	err = json.Unmarshal(rec.Body.Bytes(), &res)
 	assert.NoError(t, err)
-	_, ok := res["access_token"]
+	tokenType := res["token_type"]
+	assert.Equal(t, "bearer", tokenType)
+	tokenString := res["access_token"].(string)
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
+	assert.NoError(t, err)
+	claims, ok := token.Claims.(jwt.MapClaims)
 	assert.True(t, ok)
+	assert.Equal(t, c.getIssuerUrl().String(), claims["iss"])
+	assert.Equal(t, "client1", claims["sub"])
+	assert.Contains(t, claims, "exp")
+	assert.Contains(t, claims, "iat")
 }

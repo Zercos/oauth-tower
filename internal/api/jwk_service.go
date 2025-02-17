@@ -3,6 +3,7 @@ package api
 import (
 	"crypto"
 	"encoding/base64"
+	"fmt"
 	"math/rand"
 	"os"
 
@@ -75,6 +76,14 @@ func (m *JWKManager) GetSignKey() *jose.JSONWebKey {
 	randInd := rand.Intn(len(kids))
 	k := m.keyByKid[kids[randInd]]
 	return &k.Private
+}
+
+func (m *JWKManager) SignToken(token *jwt.Token) (string, error) {
+	jwk := m.GetSignKey()
+	if jwk == nil {
+		return "", fmt.Errorf("Missing signing key")
+	}
+	return token.SignedString(jwk.Key)
 }
 
 func NewJWKManager() *JWKManager {
