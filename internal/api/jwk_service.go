@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"sync"
 
 	"github.com/go-jose/go-jose/v4"
 	"github.com/golang-jwt/jwt"
@@ -26,34 +27,48 @@ func (m *JWKManager) LoadKeys() error {
 	if err != nil {
 		return err
 	}
+	var keysMap sync.Map
+	var wg sync.WaitGroup
+
 	for _, file := range files {
 		name := file.Name()
 		if file.IsDir() || (len(name) >= 10 && name[len(name)-10:] == "public.pem") {
 			continue
 		}
-		privKeyFile := name
-		pubKeyFile := name[:len(name)-4] + ".public.pem"
-		pemPrivData, errPriv := os.ReadFile(dirPath + "/" + privKeyFile)
-		pemPubData, errPub := os.ReadFile(dirPath + "/" + pubKeyFile)
-		if errPriv != nil || errPub != nil {
-			continue
-		}
-		pubKey, errPub := jwt.ParseRSAPublicKeyFromPEM(pemPubData)
-		privKey, errPriv := jwt.ParseRSAPrivateKeyFromPEM(pemPrivData)
-		if errPriv != nil || errPub != nil {
-			continue
-		}
-		pubJWK := jose.JSONWebKey{Key: pubKey, Algorithm: "RS256"}
-		privJWK := jose.JSONWebKey{Key: privKey, Algorithm: "RS256"}
-		thumbprint, err := privJWK.Thumbprint(crypto.SHA256)
-		if err != nil {
-			continue
-		}
-		kid := base64.RawURLEncoding.EncodeToString(thumbprint[:])
-		privJWK.KeyID = kid
-		pubJWK.KeyID = kid
-		m.keyByKid[kid] = KeyPair{Public: pubJWK, Private: privJWK}
+		wg.Add(1)
+		go func(name string, keys *sync.Map, wg *sync.WaitGroup) {
+			defer wg.Done()
+			privKeyFile := name
+			pubKeyFile := name[:len(name)-4] + ".public.pem"
+			pemPrivData, errPriv := os.ReadFile(dirPath + "/" + privKeyFile)
+			pemPubData, errPub := os.ReadFile(dirPath + "/" + pubKeyFile)
+			if errPriv != nil || errPub != nil {
+				return
+			}
+			pubKey, errPub := jwt.ParseRSAPublicKeyFromPEM(pemPubData)
+			privKey, errPriv := jwt.ParseRSAPrivateKeyFromPEM(pemPrivData)
+			if errPriv != nil || errPub != nil {
+				return
+			}
+			pubJWK := jose.JSONWebKey{Key: pubKey, Algorithm: "RS256"}
+			privJWK := jose.JSONWebKey{Key: privKey, Algorithm: "RS256"}
+			thumbprint, err := privJWK.Thumbprint(crypto.SHA256)
+			if err != nil {
+				return
+			}
+			kid := base64.RawURLEncoding.EncodeToString(thumbprint[:])
+			privJWK.KeyID = kid
+			pubJWK.KeyID = kid
+			keys.Store(kid, KeyPair{Public: pubJWK, Private: privJWK})
+		}(name, &keysMap, &wg)
+
 	}
+
+	wg.Wait()
+	keysMap.Range(func(key, value interface{}) bool {
+		m.keyByKid[key.(string)] = value.(KeyPair)
+		return true
+	})
 	return nil
 }
 
