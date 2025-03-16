@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"golang.org/x/time/rate"
 )
 
 func newServer(ctx *AppContext) *echo.Echo {
@@ -18,6 +19,11 @@ func newServer(ctx *AppContext) *echo.Echo {
 		Format: "time=${time_rfc3339}, path=${path}, method=${method} uri=${uri}, status=${status}, error=${error}\n",
 	}))
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
+	e.Use(middleware.Secure())
+	e.Use(middleware.RequestID())
+	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(100))))
+
 	e.Logger.SetLevel(log.DEBUG)
 	e.Logger.SetHeader("${time_rfc3339} ${level} ${short_file}:L${line} ${message}")
 	return e
@@ -37,10 +43,6 @@ func CreateServer() *echo.Echo {
 	e.GET(EndpointJWK, JWKHandler)
 	e.POST(EndpointToken, NewTokenHandler)
 	return e
-}
-
-func Run(e *echo.Echo) {
-	e.Logger.Fatal(e.Start(":8000"))
 }
 
 func newRequestContext(c echo.Context, ctx *AppContext) RequestContext {
