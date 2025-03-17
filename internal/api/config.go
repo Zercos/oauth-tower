@@ -22,3 +22,7 @@ func (c *Config) getDbPath() string {
 func (c *Config) getExpireTokenSec() uint16 {
 	return 1200
 }
+
+func (c *Config) getIssuerHost() string {
+	return os.Getenv("ISSUER_HOST")
+}

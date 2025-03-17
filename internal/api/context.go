@@ -13,10 +13,13 @@ type RequestContext struct {
 }
 
 func (c *RequestContext) getIssuerUrl() *url.URL {
-	host := c.Request().Host
-	xForwardedHosts := c.Request().Header["X-Forwarded-Host"]
-	if len(xForwardedHosts) > 0 {
-		host = xForwardedHosts[0]
+	host := config.getIssuerHost()
+	if host == "" {
+		host = c.Request().Host
+		xForwardedHosts := c.Request().Header["X-Forwarded-Host"]
+		if len(xForwardedHosts) > 0 {
+			host = xForwardedHosts[0]
+		}
 	}
 	return &url.URL{
 		Scheme: c.Scheme(),
