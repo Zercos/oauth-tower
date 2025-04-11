@@ -23,8 +23,6 @@ RUN chown -R nginx:nginx /usr/local/bin/main && \
     chmod +x /usr/local/bin/start.sh
 
 ENV SERVER_PORT="8080"
-ENV DB_PATH=/app/app.db
-ENV JWK_PATH=/app/keys
 
 EXPOSE 80
 
