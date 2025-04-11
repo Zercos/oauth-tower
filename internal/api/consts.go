@@ -15,12 +15,13 @@ const (
 
 // Endpoints
 const (
-	EndpointWellKnown     = "/.well-known/oauth-authorization-server"
-	EndpointAuthorization = "/oauth/authorization"
-	EndpointToken         = "/oauth/token"
-	EndpointIntrospection = "/oauth/introspection"
-	EndpointRevocation    = "/oauth/revocation"
-	EndpointJWK           = "/oauth/jwks.json"
+	EndpointWellKnown          = "/.well-known/oauth-authorization-server"
+	EndpointAuthorization      = "/oauth/authorize"
+	EndpointAuthorizationLogin = "/login"
+	EndpointToken              = "/oauth/token"
+	EndpointIntrospection      = "/oauth/introspection"
+	EndpointRevocation         = "/oauth/revocation"
+	EndpointJWK                = "/oauth/jwks.json"
 )
 
 // Grant Types

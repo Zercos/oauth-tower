@@ -23,6 +23,13 @@ type RequestDataNewToken struct {
 	GrantType    string `json:"grant_type"`
 }
 
+type RequestQueryParamAuthorize struct {
+	ClientId     string `query:"client_id"`
+	ResponseType string `query:"response_type"`
+	RedirectURI  string `query:"redirect_uri"`
+	State        string `query:"state"`
+}
+
 type ResponseNewToken struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`

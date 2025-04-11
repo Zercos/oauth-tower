@@ -1,10 +1,16 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 
+	"github.com/google/uuid"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
+
+var authCodes = map[string]string{}
 
 func indexHandler(c echo.Context) error {
 	cc := c.(RequestContext)
@@ -61,4 +67,37 @@ func NewTokenHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized)
 	}
 	return c.JSON(http.StatusOK, newToken)
+}
+
+func AuthorizationHandler(c echo.Context) error {
+	ctx := c.(RequestContext)
+	var reqData RequestQueryParamAuthorize
+	if err := c.Bind(&reqData); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+	if reqData.ResponseType != ResponseTypeAuthorizationCodeFlow {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "unsupported_response_type"})
+	}
+	client, err := ctx.ClientRepo.GetClient(reqData.ClientId)
+	if err != nil || client.RedirectURI != reqData.RedirectURI {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid_client"})
+	}
+
+	sess, err := session.Get("session", c)
+	if err != nil || sess.Values["user_id"] == nil {
+		// Not authenticated -> redirect to login with original URL
+		originalQuery := c.Request().URL.RawQuery
+		loginRedirect := fmt.Sprintf("%s?redirect=/authorize?%s", EndpointAuthorizationLogin, url.QueryEscape(originalQuery))
+		return c.Redirect(http.StatusFound, loginRedirect)
+	}
+
+	userID := sess.Values["user_id"].(string)
+	code := uuid.New().String()
+	authCodes[code] = userID
+
+	redirectWithParams := reqData.RedirectURI + "?code=" + code
+	if reqData.State != "" {
+		redirectWithParams += "&state=" + reqData.State
+	}
+	return c.Redirect(http.StatusFound, redirectWithParams)
 }

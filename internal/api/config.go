@@ -26,3 +26,7 @@ func (c *Config) getExpireTokenSec() uint16 {
 func (c *Config) getIssuerHost() string {
 	return os.Getenv("ISSUER_HOST")
 }
+
+func (c *Config) getSecretKey() string {
+	return os.Getenv("SECRET_KEY")
+}

@@ -96,7 +96,7 @@ func TestClientCredentialsNewTokenHandler(t *testing.T) {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := newRequestContext(e.NewContext(req, rec), appCtx)
-	err = c.ClientRepo.AddClient(OAuthClient{"client1", "secret"})
+	err = c.ClientRepo.AddClient(OAuthClient{"client1", "secret", "http://example.com/callback"})
 	assert.NoError(t, err)
 
 	// when

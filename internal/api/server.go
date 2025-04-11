@@ -1,6 +1,8 @@
 package api
 
 import (
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -23,6 +25,7 @@ func newServer(ctx *AppContext) *echo.Echo {
 	e.Use(middleware.Secure())
 	e.Use(middleware.RequestID())
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(100))))
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.getSecretKey()))))
 
 	e.Logger.SetLevel(log.DEBUG)
 	e.Logger.SetHeader("${time_rfc3339} ${level} ${short_file}:L${line} ${message}")
@@ -42,6 +45,7 @@ func CreateServer() *echo.Echo {
 	e.GET(EndpointWellKnown, authorizationServerWellKnownHandler)
 	e.GET(EndpointJWK, JWKHandler)
 	e.POST(EndpointToken, NewTokenHandler)
+	e.GET(EndpointAuthorization, AuthorizationHandler)
 	return e
 }
 
