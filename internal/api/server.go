@@ -1,6 +1,8 @@
 package api
 
 import (
+	"html/template"
+
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -27,6 +29,11 @@ func newServer(ctx *AppContext) *echo.Echo {
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(100))))
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.getSecretKey()))))
 
+	renderer := &TemplateRenderer{
+		templates: template.Must(template.ParseGlob("../templates/*.html")),
+	}
+	e.Renderer = renderer
+
 	e.Logger.SetLevel(log.DEBUG)
 	e.Logger.SetHeader("${time_rfc3339} ${level} ${short_file}:L${line} ${message}")
 	return e
@@ -46,9 +53,11 @@ func CreateServer() *echo.Echo {
 	e.GET(EndpointJWK, JWKHandler)
 	e.POST(EndpointToken, NewTokenHandler)
 	e.GET(EndpointAuthorization, AuthorizationHandler)
+	e.GET(EndpointAuthorizationLogin, LoginPageHandler)
+	e.POST(EndpointAuthorizationLogin, UserLoginHandler)
 	return e
 }
 
 func newRequestContext(c echo.Context, ctx *AppContext) RequestContext {
-	return RequestContext{c, ctx.JWKManager, ctx.ClientRepo}
+	return RequestContext{c, ctx.JWKManager, ctx.ClientRepo, ctx.UserRepo}
 }

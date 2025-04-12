@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"errors"
 )
 
@@ -28,9 +29,15 @@ func (c *ClientRepository) GetClient(clientId string) (OAuthClient, error) {
 	return client, nil
 }
 
-func (c *ClientRepository) AddClient(client OAuthClient) error {
+func (c *ClientRepository) AddClient(client OAuthClient, checkExists bool) error {
+	if checkExists {
+		_, err := c.GetClient(client.ClientId)
+		if err != sql.ErrNoRows {
+			return err
+		}
+	}
 	_, err := c.db.Exec(
-		"INSERT INTO clients (client_id, client_secret, redirect_uri)  VALUES (?, ?, ?)",
+		"INSERT INTO clients (client_id, client_secret, redirect_uri) VALUES (?, ?, ?)",
 		client.ClientId, client.ClientSecret, client.RedirectURI,
 	)
 	if err != nil {

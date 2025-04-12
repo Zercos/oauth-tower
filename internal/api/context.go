@@ -10,6 +10,7 @@ type RequestContext struct {
 	echo.Context
 	JWKManager *JWKManager
 	ClientRepo IClientRepo
+	UserRepo   IUserRepo
 }
 
 func (c *RequestContext) getIssuerUrl() *url.URL {
@@ -32,6 +33,7 @@ type AppContext struct {
 	initiated  bool
 	JWKManager *JWKManager
 	ClientRepo IClientRepo
+	UserRepo   IUserRepo
 }
 
 func (ctx *AppContext) Init() error {
@@ -41,5 +43,9 @@ func (ctx *AppContext) Init() error {
 
 func NewAppContext() *AppContext {
 	db := initDB()
-	return &AppContext{JWKManager: NewJWKManager(), ClientRepo: NewClientRepository(db)}
+	return &AppContext{
+		JWKManager: NewJWKManager(),
+		ClientRepo: NewClientRepository(db),
+		UserRepo:   NewUserRepository((db)),
+	}
 }

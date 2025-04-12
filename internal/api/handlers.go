@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
@@ -100,4 +101,39 @@ func AuthorizationHandler(c echo.Context) error {
 		redirectWithParams += "&state=" + reqData.State
 	}
 	return c.Redirect(http.StatusFound, redirectWithParams)
+}
+
+func LoginPageHandler(c echo.Context) error {
+	redirect := c.QueryParam("redirect")
+	return c.Render(http.StatusOK, "login.html", map[string]interface{}{
+		"Redirect": redirect,
+	})
+}
+
+func UserLoginHandler(c echo.Context) error {
+	ctx := c.(RequestContext)
+	var loginData RequestDataNewLogin
+	if err := c.Bind(&loginData); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	user, err := ctx.UserRepo.GetUser(loginData.Username)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	if err := ctx.UserRepo.AuthenticateUser(loginData.Username, loginData.Password); err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
+	}
+	sess, _ := session.Get("session", c)
+	sess.Values["user_id"] = user.UserId
+	sess.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   86400, // 1 day
+		HttpOnly: true,
+	}
+	sess.Save(c.Request(), c.Response())
+
+	return c.Redirect(http.StatusFound, loginData.Redirect)
+
 }

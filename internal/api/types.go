@@ -30,6 +30,12 @@ type RequestQueryParamAuthorize struct {
 	State        string `query:"state"`
 }
 
+type RequestDataNewLogin struct {
+	Redirect string `json:"redirect"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type ResponseNewToken struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
@@ -42,6 +48,11 @@ type GrantTypeAuthorizer interface {
 
 type IClientRepo interface {
 	GetClient(clientId string) (OAuthClient, error)
-	AddClient(client OAuthClient) error
+	AddClient(client OAuthClient, checkExists bool) error
 	AuthenticateClient(clientId string, clientSecret string) error
+}
+
+type IUserRepo interface {
+	GetUser(username string) (UserModel, error)
+	AuthenticateUser(username string, password string) error
 }

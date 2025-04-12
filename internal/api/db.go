@@ -21,7 +21,8 @@ func initDB() *DB {
 		log.Fatal(err)
 	}
 	sqlStmt := `
-	create table IF NOT EXISTS clients (client_id text not null primary key, client_secret text);
+	create table IF NOT EXISTS clients (client_id text not null primary key, client_secret text, redirect_uri text);
+	create table IF NOT EXISTS users (user_id text not null primary key, username text, password_hash text);
 	`
 	_, err = db.Exec(sqlStmt)
 	if err != nil {
@@ -31,7 +32,10 @@ func initDB() *DB {
 }
 
 func (db *DB) ClearWholeDB() {
-	sqlStmt := "delete from clients;"
+	sqlStmt := `
+		delete from clients;
+		delete from users;
+	`
 	_, err := db.Exec(sqlStmt)
 	if err != nil {
 		log.Fatal(err)
