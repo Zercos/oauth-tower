@@ -117,13 +117,13 @@ func UserLoginHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
+	if err := ctx.UserRepo.AuthenticateUser(loginData.Username, loginData.Password); err != nil {
+		ctx.Logger().Error(err)
+		return c.String(http.StatusUnauthorized, "Invalid credentials")
+	}
 	user, err := ctx.UserRepo.GetUser(loginData.Username)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
-	if err := ctx.UserRepo.AuthenticateUser(loginData.Username, loginData.Password); err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
 	}
 	sess, _ := session.Get("session", c)
 	sess.Values["user_id"] = user.UserId

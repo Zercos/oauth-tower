@@ -22,7 +22,7 @@ func initDB() *DB {
 	}
 	sqlStmt := `
 	create table IF NOT EXISTS clients (client_id text not null primary key, client_secret text, redirect_uri text);
-	create table IF NOT EXISTS users (user_id text not null primary key, username text, password_hash text);
+	create table IF NOT EXISTS users (user_id integer primary key, username text, password_hash text);
 	`
 	_, err = db.Exec(sqlStmt)
 	if err != nil {

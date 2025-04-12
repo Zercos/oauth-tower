@@ -1,6 +1,11 @@
 package api
 
-import "errors"
+import (
+	"database/sql"
+	"errors"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 type UserModel struct {
 	UserId       string
@@ -8,8 +13,17 @@ type UserModel struct {
 	PasswordHash string
 }
 
+type NewUser struct {
+	Username string
+	Password string
+}
+
 type UserRepository struct {
 	db *DB
+}
+
+func NewUserRepository(db *DB) *UserRepository {
+	return &UserRepository{db: db}
 }
 
 func (c *UserRepository) GetUser(username string) (UserModel, error) {
@@ -20,10 +34,7 @@ func (c *UserRepository) GetUser(username string) (UserModel, error) {
 	}
 	defer stmt.Close()
 	err = stmt.QueryRow(username).Scan(&user.UserId, &user.Username, &user.PasswordHash)
-	if err != nil {
-		return user, err
-	}
-	return user, nil
+	return user, err
 }
 
 func (c *UserRepository) AuthenticateUser(username string, password string) error {
@@ -31,12 +42,25 @@ func (c *UserRepository) AuthenticateUser(username string, password string) erro
 	if err != nil {
 		return err
 	}
-	if user.PasswordHash != password {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
 		return errors.New("user password is invalid")
 	}
 	return nil
 }
 
-func NewUserRepository(db *DB) *UserRepository {
-	return &UserRepository{db: db}
+func (c *UserRepository) AddUser(user NewUser, checkExists bool) error {
+	if checkExists {
+		_, err := c.GetUser(user.Username)
+		if err != sql.ErrNoRows {
+			return err
+		}
+	}
+
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+
+	_, err := c.db.Exec(
+		"INSERT INTO users (username, password_hash) VALUES (?, ?)",
+		user.Username, string(hashedPassword),
+	)
+	return err
 }

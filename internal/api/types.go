@@ -31,9 +31,9 @@ type RequestQueryParamAuthorize struct {
 }
 
 type RequestDataNewLogin struct {
-	Redirect string `json:"redirect"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Redirect string `form:"redirect"`
+	Username string `form:"username"`
+	Password string `form:"password"`
 }
 
 type ResponseNewToken struct {
@@ -55,4 +55,5 @@ type IClientRepo interface {
 type IUserRepo interface {
 	GetUser(username string) (UserModel, error)
 	AuthenticateUser(username string, password string) error
+	AddUser(user NewUser, checkExists bool) error
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -155,7 +156,6 @@ func TestAuthorizeFailsWithInvalidClient(t *testing.T) {
 
 func TestAuthorizeReturnsAuthCodeWhenAuthenticated(t *testing.T) {
 	// given
-
 	req := httptest.NewRequest(http.MethodGet, EndpointAuthorization+"?response_type=code&client_id=client1&redirect_uri=http://example.com/callback", nil)
 	rec := httptest.NewRecorder()
 	ctx := mkTestRequestCtx(t, req, rec)
@@ -178,4 +178,78 @@ func TestAuthorizeReturnsAuthCodeWhenAuthenticated(t *testing.T) {
 	assert.Equal(t, http.StatusFound, rec.Code)
 	location := rec.Header().Get("Location")
 	assert.Contains(t, location, "code=")
+}
+
+func TestLoginPageRenders(t *testing.T) {
+	// given
+	req := httptest.NewRequest(http.MethodGet, EndpointAuthorizationLogin+"?redirect=/authorize", nil)
+	rec := httptest.NewRecorder()
+	ctx := mkTestRequestCtx(t, req, rec)
+
+	// when
+	err := LoginPageHandler(ctx)
+
+	// then
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Contains(t, rec.Body.String(), "<form")
+	assert.Contains(t, rec.Body.String(), "Log In")
+}
+
+func TestLoginFail(t *testing.T) {
+	// given
+	form := url.Values{}
+	form.Add("username", "admin")
+	form.Add("password", "wrongpass")
+	form.Add("redirect", "/authorize")
+
+	req := httptest.NewRequest(http.MethodPost, EndpointAuthorizationLogin, strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+
+	ctx := mkTestRequestCtx(t, req, rec)
+
+	// when
+	err := UserLoginHandler(ctx)
+
+	// then
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+}
+
+func TestLoginSuccess(t *testing.T) {
+	// given
+	user := NewUser{"admin", "pass"}
+
+	form := url.Values{}
+	form.Add("username", user.Username)
+	form.Add("password", "pass")
+	form.Add("redirect", "/authorize?foo=bar")
+
+	req := httptest.NewRequest(http.MethodPost, EndpointAuthorizationLogin, strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	ctx := mkTestRequestCtx(t, req, rec)
+	ctx.Set("_session_store", sessions.NewCookieStore([]byte("secret")))
+
+	assert.NoError(t, ctx.UserRepo.AddUser(user, true))
+
+	// when
+	err := UserLoginHandler(ctx)
+
+	// then
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusFound, rec.Code)
+	assert.Equal(t, "/authorize?foo=bar", rec.Header().Get("Location"))
+
+	cookies := rec.Result().Cookies()
+	assert.NotEmpty(t, cookies)
+
+	var sessionCookie *http.Cookie
+	for _, cookie := range cookies {
+		if cookie.Name == "session" {
+			sessionCookie = cookie
+		}
+	}
+	assert.NotNil(t, sessionCookie, "session cookie should be set")
 }
