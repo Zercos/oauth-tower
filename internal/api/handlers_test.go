@@ -38,7 +38,7 @@ func TestIndexHandler(t *testing.T) {
 	expectedConfigUrl := ctx.getIssuerUrl().String() + EndpointWellKnown
 
 	// when
-	err := indexHandler(ctx)
+	err := IndexHandler(ctx)
 
 	// then
 	assert.NoError(t, err)
@@ -58,7 +58,7 @@ func TestAuthorizationServerWellKnownHandler(t *testing.T) {
 	ctx := mkTestRequestCtx(t, req, rec)
 
 	// when
-	err := authorizationServerWellKnownHandler(ctx)
+	err := AuthorizationServerWellKnownHandler(ctx)
 
 	// then
 	assert.NoError(t, err)
@@ -117,6 +117,48 @@ func TestClientCredentialsNewTokenHandler(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, ctx.getIssuerUrl().String(), claims["iss"])
 	assert.Equal(t, "client1", claims["sub"])
+	assert.Contains(t, claims, "exp")
+	assert.Contains(t, claims, "iat")
+}
+
+func TestAuthorizationcodeNewTokenHandler(t *testing.T) {
+	// given
+	userId := "testuser"
+	newTokenReqJson := `{
+		"client_id":"client1",
+		"client_secret":"secret",
+		"grant_type":"authorization_code",
+		"code":"code123",
+		"redirect_uri":"http://example.com/callback"
+	}`
+	req := httptest.NewRequest(http.MethodPost, EndpointToken, strings.NewReader(newTokenReqJson))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+
+	ctx := mkTestRequestCtx(t, req, rec)
+	authCodes["code123"] = userId
+	err := ctx.ClientRepo.AddClient(OAuthClient{"client1", "secret", "http://example.com/callback"}, true)
+	assert.NoError(t, err)
+
+	// when
+	err = NewTokenHandler(ctx)
+
+	// then
+	assert.NoError(t, err)
+
+	var res map[string]interface{}
+	err = json.Unmarshal(rec.Body.Bytes(), &res)
+	assert.NoError(t, err)
+	tokenType := res["token_type"]
+	assert.Equal(t, "bearer", tokenType)
+	tokenString := res["access_token"].(string)
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
+	assert.NoError(t, err)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	assert.True(t, ok)
+	assert.Equal(t, ctx.getIssuerUrl().String(), claims["iss"])
+	assert.Equal(t, "client1", claims["aud"])
+	assert.Equal(t, userId, claims["sub"])
 	assert.Contains(t, claims, "exp")
 	assert.Contains(t, claims, "iat")
 }

@@ -21,6 +21,8 @@ type RequestDataNewToken struct {
 	ClientId     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 	GrantType    string `json:"grant_type"`
+	Code         string `json:"code"`
+	RedirectURI  string `json:"redirect_uri"`
 }
 
 type RequestQueryParamAuthorize struct {
@@ -56,4 +58,12 @@ type IUserRepo interface {
 	GetUser(username string) (UserModel, error)
 	AuthenticateUser(username string, password string) error
 	AddUser(user NewUser, checkExists bool) error
+}
+
+type ClientCredentialsAuthorizer struct {
+	ctx RequestContext
+}
+
+type AuthorizationCodeAuthorizer struct {
+	ctx RequestContext
 }

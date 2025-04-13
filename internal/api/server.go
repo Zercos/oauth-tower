@@ -48,8 +48,8 @@ func CreateServer() *echo.Echo {
 	e := newServer(ctx)
 
 	// Routes
-	e.GET("/", indexHandler)
-	e.GET(EndpointWellKnown, authorizationServerWellKnownHandler)
+	e.GET("/", IndexHandler)
+	e.GET(EndpointWellKnown, AuthorizationServerWellKnownHandler)
 	e.GET(EndpointJWK, JWKHandler)
 	e.POST(EndpointToken, NewTokenHandler)
 	e.GET(EndpointAuthorization, AuthorizationHandler)

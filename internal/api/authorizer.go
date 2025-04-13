@@ -1,21 +1,21 @@
 package api
 
 import (
+	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 )
 
 func authorizerByGrantType(grantType string, ctx RequestContext) GrantTypeAuthorizer {
-	if grantType == GrantTypeClientCredentials {
+	switch grantType {
+	case GrantTypeAuthorizationCode:
+		return &AuthorizationCodeAuthorizer{ctx}
+	case GrantTypeClientCredentials:
 		return &ClientCredentialsAuthorizer{ctx}
+	default:
+		return nil
 	}
-
-	return nil
-}
-
-type ClientCredentialsAuthorizer struct {
-	ctx RequestContext
 }
 
 func (a *ClientCredentialsAuthorizer) GenerateJWT(tokenData RequestDataNewToken) (ResponseNewToken, error) {
@@ -43,6 +43,46 @@ func (a *ClientCredentialsAuthorizer) makeJWT(clientId string) *jwt.Token {
 			"sub": clientId,
 			"exp": time.Now().Add(time.Second * time.Duration(config.getExpireTokenSec())).Unix(),
 			"iat": time.Now().Unix(),
+		},
+	)
+	return token
+}
+
+func (a *AuthorizationCodeAuthorizer) GenerateJWT(tokenData RequestDataNewToken) (ResponseNewToken, error) {
+	var newToken ResponseNewToken
+	if err := a.ctx.ClientRepo.AuthenticateClient(tokenData.ClientId, tokenData.ClientSecret); err != nil {
+		return newToken, err
+	}
+
+	_, ok := authCodes[tokenData.Code]
+	if !ok {
+		return newToken, errors.New("invalid_grant")
+	}
+
+	token := a.makeJWT(tokenData)
+	signedToken, err := a.ctx.JWKManager.SignToken(token)
+	if err != nil {
+		return newToken, err
+	}
+	delete(authCodes, tokenData.Code)
+	newToken = ResponseNewToken{
+		AccessToken: signedToken,
+		TokenType:   "bearer",
+		ExpiresIn:   config.getExpireTokenSec(),
+	}
+	return newToken, nil
+}
+
+func (a *AuthorizationCodeAuthorizer) makeJWT(tokenData RequestDataNewToken) *jwt.Token {
+	userId := authCodes[tokenData.Code]
+	token := jwt.NewWithClaims(
+		jwt.SigningMethodRS256,
+		jwt.MapClaims{
+			"iss": a.ctx.getIssuerUrl().String(),
+			"sub": userId,
+			"exp": time.Now().Add(time.Second * time.Duration(config.getExpireTokenSec())).Unix(),
+			"iat": time.Now().Unix(),
+			"aud": tokenData.ClientId,
 		},
 	)
 	return token

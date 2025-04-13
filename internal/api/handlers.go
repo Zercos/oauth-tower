@@ -13,7 +13,7 @@ import (
 
 var authCodes = map[string]string{}
 
-func indexHandler(c echo.Context) error {
+func IndexHandler(c echo.Context) error {
 	cc := c.(RequestContext)
 	response := map[string]string{
 		"message": "Welcome to the OAuth-Tower - OAuth 2.0 Authorization Server",
@@ -23,7 +23,7 @@ func indexHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-func authorizationServerWellKnownHandler(c echo.Context) error {
+func AuthorizationServerWellKnownHandler(c echo.Context) error {
 	cc := c.(RequestContext)
 	issuer := cc.getIssuerUrl().String()
 	data := WellKnownConfiguration{
@@ -60,7 +60,7 @@ func NewTokenHandler(c echo.Context) error {
 	}
 	authorizer := authorizerByGrantType(tokenData.GrantType, ctx)
 	if authorizer == nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, "unsupported_grant_type")
 	}
 	newToken, err := authorizer.GenerateJWT(tokenData)
 	if err != nil {
