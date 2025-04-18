@@ -1,5 +1,7 @@
 package api
 
+import "context"
+
 type WellKnownConfiguration struct {
 	Issuer                                     string   `json:"issuer"`
 	JWKsUri                                    string   `json:"jwks_uri,omitempty"`
@@ -68,8 +70,13 @@ type AuthorizationCodeAuthorizer struct {
 	ctx RequestContext
 }
 
-type ITokenRepo interface {
+type IRequestTokenRepo interface {
 	SetAuthToken(userId string, authToken string) error
 	GetUserIdForToken(authToken string) (string, error)
 	RemoveToken(authToken string) error
+}
+
+type ITokenRepo interface {
+	IRequestTokenRepo
+	NewTokenRepositoryWithCtx(context.Context) IRequestTokenRepo
 }

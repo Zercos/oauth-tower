@@ -59,5 +59,6 @@ func CreateServer() *echo.Echo {
 }
 
 func newRequestContext(c echo.Context, ctx *AppContext) RequestContext {
-	return RequestContext{c, ctx.JWKManager, ctx.ClientRepo, ctx.UserRepo, ctx.TokenRepo}
+	tokenRepo := ctx.TokenRepo.NewTokenRepositoryWithCtx(c.Request().Context())
+	return RequestContext{c, ctx.JWKManager, ctx.ClientRepo, ctx.UserRepo, tokenRepo}
 }

@@ -11,7 +11,7 @@ type RequestContext struct {
 	JWKManager *JWKManager
 	ClientRepo IClientRepo
 	UserRepo   IUserRepo
-	TokenRepo  ITokenRepo
+	TokenRepo  IRequestTokenRepo
 }
 
 func (c *RequestContext) getIssuerUrl() *url.URL {

@@ -30,3 +30,7 @@ func (c *Config) getIssuerHost() string {
 func (c *Config) getSecretKey() string {
 	return os.Getenv("SECRET_KEY")
 }
+
+func (c *Config) getRedisUrl() string {
+	return os.Getenv("REDIS_URL")
+}

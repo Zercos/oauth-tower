@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -40,6 +41,10 @@ func (t *TestTokenRepository) RemoveToken(authToken string) error {
 func (t *TestTokenRepository) SetAuthToken(userId string, authToken string) error {
 	t.db[authToken] = userId
 	return nil
+}
+
+func (t *TestTokenRepository) NewTokenRepositoryWithCtx(context.Context) IRequestTokenRepo {
+	return t
 }
 
 func mkTestRequestCtx(t *testing.T, req *http.Request, rec *httptest.ResponseRecorder) RequestContext {
