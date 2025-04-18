@@ -54,17 +54,20 @@ func (a *AuthorizationCodeAuthorizer) GenerateJWT(tokenData RequestDataNewToken)
 		return newToken, err
 	}
 
-	_, ok := authCodes[tokenData.Code]
-	if !ok {
+	userId, err := a.ctx.TokenRepo.GetUserIdForToken(tokenData.Code)
+	if err != nil || userId == "" {
 		return newToken, errors.New("invalid_grant")
 	}
 
-	token := a.makeJWT(tokenData)
+	token := a.makeJWT(tokenData, userId)
 	signedToken, err := a.ctx.JWKManager.SignToken(token)
 	if err != nil {
 		return newToken, err
 	}
-	delete(authCodes, tokenData.Code)
+	err = a.ctx.TokenRepo.RemoveToken(tokenData.Code)
+	if err != nil {
+		return newToken, err
+	}
 	newToken = ResponseNewToken{
 		AccessToken: signedToken,
 		TokenType:   "bearer",
@@ -73,8 +76,7 @@ func (a *AuthorizationCodeAuthorizer) GenerateJWT(tokenData RequestDataNewToken)
 	return newToken, nil
 }
 
-func (a *AuthorizationCodeAuthorizer) makeJWT(tokenData RequestDataNewToken) *jwt.Token {
-	userId := authCodes[tokenData.Code]
+func (a *AuthorizationCodeAuthorizer) makeJWT(tokenData RequestDataNewToken, userId string) *jwt.Token {
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodRS256,
 		jwt.MapClaims{

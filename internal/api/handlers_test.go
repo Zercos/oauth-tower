@@ -23,8 +23,29 @@ func init() {
 	db.ClearWholeDB()
 }
 
+type TestTokenRepository struct {
+	db map[string]string
+}
+
+func (t *TestTokenRepository) GetUserIdForToken(authToken string) (string, error) {
+	userId := t.db[authToken]
+	return userId, nil
+}
+
+func (t *TestTokenRepository) RemoveToken(authToken string) error {
+	delete(t.db, authToken)
+	return nil
+}
+
+func (t *TestTokenRepository) SetAuthToken(userId string, authToken string) error {
+	t.db[authToken] = userId
+	return nil
+}
+
 func mkTestRequestCtx(t *testing.T, req *http.Request, rec *httptest.ResponseRecorder) RequestContext {
-	appCtx := NewAppContext()
+	appCtx := NewAppContext(map[string]interface{}{
+		"tokenRepo": &TestTokenRepository{make(map[string]string)},
+	})
 	assert.NoError(t, appCtx.Init())
 	e := newServer(appCtx)
 	return newRequestContext(e.NewContext(req, rec), appCtx)
@@ -136,7 +157,7 @@ func TestAuthorizationcodeNewTokenHandler(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	ctx := mkTestRequestCtx(t, req, rec)
-	authCodes["code123"] = userId
+	ctx.TokenRepo.SetAuthToken(userId, "code123")
 	err := ctx.ClientRepo.AddClient(OAuthClient{"client1", "secret", "http://example.com/callback"}, true)
 	assert.NoError(t, err)
 

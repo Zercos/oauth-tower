@@ -40,7 +40,7 @@ func newServer(ctx *AppContext) *echo.Echo {
 }
 
 func CreateServer() *echo.Echo {
-	ctx := NewAppContext()
+	ctx := NewAppContext(make(map[string]interface{}))
 	err := ctx.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -59,5 +59,5 @@ func CreateServer() *echo.Echo {
 }
 
 func newRequestContext(c echo.Context, ctx *AppContext) RequestContext {
-	return RequestContext{c, ctx.JWKManager, ctx.ClientRepo, ctx.UserRepo}
+	return RequestContext{c, ctx.JWKManager, ctx.ClientRepo, ctx.UserRepo, ctx.TokenRepo}
 }

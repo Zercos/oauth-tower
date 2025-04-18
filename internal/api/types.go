@@ -67,3 +67,9 @@ type ClientCredentialsAuthorizer struct {
 type AuthorizationCodeAuthorizer struct {
 	ctx RequestContext
 }
+
+type ITokenRepo interface {
+	SetAuthToken(userId string, authToken string) error
+	GetUserIdForToken(authToken string) (string, error)
+	RemoveToken(authToken string) error
+}

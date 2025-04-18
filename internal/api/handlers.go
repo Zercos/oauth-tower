@@ -11,8 +11,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-var authCodes = map[string]string{}
-
 func IndexHandler(c echo.Context) error {
 	cc := c.(RequestContext)
 	response := map[string]string{
@@ -94,7 +92,10 @@ func AuthorizationHandler(c echo.Context) error {
 
 	userID := sess.Values["user_id"].(string)
 	code := uuid.New().String()
-	authCodes[code] = userID
+	err = ctx.TokenRepo.SetAuthToken(userID, code)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
 
 	redirectWithParams := reqData.RedirectURI + "?code=" + code
 	if reqData.State != "" {

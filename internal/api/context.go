@@ -11,6 +11,7 @@ type RequestContext struct {
 	JWKManager *JWKManager
 	ClientRepo IClientRepo
 	UserRepo   IUserRepo
+	TokenRepo  ITokenRepo
 }
 
 func (c *RequestContext) getIssuerUrl() *url.URL {
@@ -34,6 +35,7 @@ type AppContext struct {
 	JWKManager *JWKManager
 	ClientRepo IClientRepo
 	UserRepo   IUserRepo
+	TokenRepo  ITokenRepo
 }
 
 func (ctx *AppContext) Init() error {
@@ -41,11 +43,18 @@ func (ctx *AppContext) Init() error {
 	return ctx.JWKManager.LoadKeys()
 }
 
-func NewAppContext() *AppContext {
+func NewAppContext(defaultBuilders map[string]interface{}) *AppContext {
 	db := initDB()
+	var tokenRepo ITokenRepo
+	if tokenRepoBuilder, ok := defaultBuilders["tokenRepo"]; ok {
+		tokenRepo = tokenRepoBuilder.(ITokenRepo)
+	} else {
+		tokenRepo = NewTokenRepository()
+	}
 	return &AppContext{
 		JWKManager: NewJWKManager(),
 		ClientRepo: NewClientRepository(db),
-		UserRepo:   NewUserRepository((db)),
+		UserRepo:   NewUserRepository(db),
+		TokenRepo:  tokenRepo,
 	}
 }
