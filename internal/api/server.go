@@ -29,8 +29,13 @@ func newServer(ctx *AppContext) *echo.Echo {
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(100))))
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.getSecretKey()))))
 
+	templateFiles, err := template.ParseGlob("./internal/templates/*.html")
+	if err != nil {
+		templateFiles, err = template.ParseGlob("../templates/*.html")
+	}
+
 	renderer := &TemplateRenderer{
-		templates: template.Must(template.ParseGlob("../templates/*.html")),
+		templates: template.Must(templateFiles, err),
 	}
 	e.Renderer = renderer
 

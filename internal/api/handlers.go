@@ -74,6 +74,8 @@ func AuthorizationHandler(c echo.Context) error {
 	if err := c.Bind(&reqData); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
+
+	ctx.Logger().Infof("Client %s is requesting authorization", reqData.ClientId)
 	if reqData.ResponseType != ResponseTypeAuthorizationCodeFlow {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "unsupported_response_type"})
 	}
@@ -86,7 +88,7 @@ func AuthorizationHandler(c echo.Context) error {
 	if err != nil || sess.Values["user_id"] == nil {
 		// Not authenticated -> redirect to login with original URL
 		originalQuery := c.Request().URL.RawQuery
-		loginRedirect := fmt.Sprintf("%s?redirect=/authorize?%s", EndpointAuthorizationLogin, url.QueryEscape(originalQuery))
+		loginRedirect := fmt.Sprintf("%s?redirect=%s?%s", EndpointAuthorizationLogin, EndpointAuthorization, url.QueryEscape(originalQuery))
 		return c.Redirect(http.StatusFound, loginRedirect)
 	}
 
@@ -101,6 +103,7 @@ func AuthorizationHandler(c echo.Context) error {
 	if reqData.State != "" {
 		redirectWithParams += "&state=" + reqData.State
 	}
+	ctx.Logger().Infof("Redirecting to %s", redirectWithParams)
 	return c.Redirect(http.StatusFound, redirectWithParams)
 }
 
@@ -124,14 +127,14 @@ func UserLoginHandler(c echo.Context) error {
 	}
 	user, err := ctx.UserRepo.GetUser(loginData.Username)
 	if err != nil {
+		ctx.Logger().Infof("User %s not found", user.Username)
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 	sess, _ := session.Get("session", c)
 	sess.Values["user_id"] = user.UserId
 	sess.Options = &sessions.Options{
-		Path:     "/",
-		MaxAge:   86400, // 1 day
-		HttpOnly: true,
+		Path:   "/",
+		MaxAge: 86400, // 1 day
 	}
 	sess.Save(c.Request(), c.Response())
 
