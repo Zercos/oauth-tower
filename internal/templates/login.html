@@ -67,6 +67,7 @@
         <h2>Login</h2>
         <form method="POST" action="/login">
             <input type="hidden" name="redirect" value="{{ .Redirect }}">
+            <input type="hidden" name="_csrf" value="{{.csrf}}">
             <label for="username">Username:</label>
             <input name="username" type="text" id="username" required>
 

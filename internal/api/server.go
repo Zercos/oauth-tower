@@ -28,6 +28,10 @@ func newServer(ctx *AppContext) *echo.Echo {
 	e.Use(middleware.RequestID())
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(100))))
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.getSecretKey()))))
+	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
+		TokenLookup: "form:_csrf",
+		CookieName:  "csrf",
+	}))
 
 	templateFiles, err := template.ParseGlob("./internal/templates/*.html")
 	if err != nil {
