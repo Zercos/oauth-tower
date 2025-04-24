@@ -26,6 +26,10 @@ keys/
 
 # Env
 .env
+.env.local
+.env.dev
+.env.test
+.env.prod
 
 # Test DB
 test.db

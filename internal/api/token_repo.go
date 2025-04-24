@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -14,6 +15,7 @@ type TokenRepository struct {
 }
 
 func NewTokenRepository() ITokenRepo {
+	fmt.Println("Connecting to Redis ", config.getRedisUrl())
 	opt, err := redis.ParseURL(config.getRedisUrl())
 	if err != nil {
 		log.Fatal(err)
